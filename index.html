@@ -1,0 +1,619 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>OLYMPUS — JARVIS</title>
+<style>
+  :root{
+    --bg:#070510;
+    --ink:#e9e6f4;
+    --ink-dim:rgba(233,230,244,.46);
+    --ink-faint:rgba(233,230,244,.24);
+    --acc1:#7C5CFF;
+    --acc2:#C026D3;
+    --green:#3dd68c;
+    --idle:#3a3650;
+    --hair:rgba(233,230,244,.08);
+    --mono:"SF Mono","Cascadia Code",ui-monospace,Menlo,Consolas,monospace;
+    --sans:"Helvetica Neue",Helvetica,"Segoe UI",Arial,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--sans);
+    font-weight:300;
+    overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  /* ---------- shell ---------- */
+  #app{
+    position:relative;
+    height:100dvh;
+    width:100%;
+    max-width:480px;
+    margin:0 auto;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    min-width:0;
+    padding:calc(14px + env(safe-area-inset-top)) clamp(12px,4vw,22px) calc(14px + env(safe-area-inset-bottom));
+    background:
+      radial-gradient(120% 52% at 50% 26%, rgba(124,92,255,.055), transparent 62%),
+      var(--bg);
+  }
+  /* every block in the column may shrink below content width — nothing
+     is allowed to lay out wider than the phone */
+  #app > *{min-width:0;max-width:100%}
+  /* ---------- header ---------- */
+  header{
+    display:flex;align-items:center;justify-content:space-between;
+    z-index:5;
+  }
+  .wordmark{
+    font-size:12px;font-weight:200;letter-spacing:.62em;text-indent:.62em;
+    color:var(--ink-dim);
+  }
+  .hdr-right{display:flex;align-items:center;gap:10px}
+  .clock{font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--ink-faint)}
+  .demo{
+    font-size:8px;letter-spacing:.34em;text-indent:.34em;color:var(--ink-dim);
+    border:1px solid var(--hair);border-radius:99px;padding:4px 8px 3px 10px;
+  }
+  /* ---------- orb stage ---------- */
+  #stage{
+    position:relative;flex:1 1 auto;min-height:0;
+    display:flex;align-items:center;justify-content:center;
+  }
+  #orbWrap{position:relative;width:min(88vw,46dvh);aspect-ratio:1}
+  #orb{position:absolute;inset:-30%;width:160%;height:160%;display:block}
+  /* faint floor glow under orb */
+  #stage::after{
+    content:"";position:absolute;left:50%;bottom:6%;
+    width:54%;height:18px;transform:translateX(-50%);
+    background:radial-gradient(50% 100% at 50% 50%, rgba(124,92,255,.14), transparent 72%);
+    filter:blur(6px);pointer-events:none;
+  }
+  /* designation under orb */
+  .designation{
+    position:absolute;left:50%;bottom:-2px;transform:translateX(-50%);
+    font-size:8px;letter-spacing:.5em;text-indent:.5em;color:var(--ink-faint);
+    white-space:nowrap;z-index:4;
+  }
+  /* ---------- transmission ---------- */
+  #brief{position:relative;z-index:5;margin-top:2px}
+  .tx-tag{
+    display:flex;align-items:center;gap:8px;margin:0 2px 9px;
+  }
+  .tx-dot{
+    width:5px;height:5px;border-radius:50%;
+    background:var(--acc2);
+    box-shadow:0 0 8px 1px rgba(192,38,211,.7);
+    animation:livedot 2.2s ease-in-out infinite;
+  }
+  @keyframes livedot{0%,100%{opacity:1}50%{opacity:.35}}
+  .tx-label{
+    font-size:clamp(7px,2.1vw,8px);letter-spacing:.36em;color:var(--ink-faint);
+    white-space:nowrap;overflow:hidden;min-width:0;
+  }
+  .tx-label b{font-weight:300;color:var(--ink-dim)}
+  .bubble{
+    position:relative;
+    border:1px solid var(--hair);
+    border-radius:3px 20px 20px 20px;
+    padding:16px 18px 17px;
+    background:linear-gradient(180deg, rgba(233,230,244,.035), rgba(233,230,244,.015));
+    font-size:clamp(13.5px,4.1vw,15.5px);font-weight:200;line-height:1.62;
+    letter-spacing:.012em;color:var(--ink);
+    max-width:100%;min-width:0;
+    overflow-wrap:break-word;word-break:break-word;
+  }
+  .bubble::before{ /* hairline uplight on top edge */
+    content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+    background:linear-gradient(180deg, rgba(233,230,244,.05), transparent 18%);
+  }
+  .bubble .w{opacity:1}
+  @keyframes wfade{to{opacity:1}}
+  .bubble .num{font-family:var(--mono);font-size:.88em;font-weight:400;color:#fff;letter-spacing:0}
+  .caret{
+    display:inline-block;width:1px;height:1em;vertical-align:-.14em;margin-left:2px;
+    background:var(--acc1);box-shadow:0 0 6px rgba(124,92,255,.9);
+    animation:caret 1.1s step-end infinite;
+  }
+  @keyframes caret{0%,100%{opacity:1}50%{opacity:0}}
+  /* ---------- ask jarvis ---------- */
+  #ask{
+    z-index:5;margin:16px auto 0;
+    display:flex;align-items:center;gap:12px;
+    border:1px solid rgba(124,92,255,.38);
+    border-radius:999px;
+    padding:14px 30px 14px 24px;
+    background:
+      radial-gradient(120% 200% at 50% -60%, rgba(124,92,255,.22), transparent 60%),
+      rgba(124,92,255,.06);
+    color:var(--ink);
+    font-family:var(--sans);font-size:11px;font-weight:300;
+    letter-spacing:.42em;text-indent:.42em;
+    cursor:pointer;outline:none;
+    box-shadow:0 0 0 0 rgba(124,92,255,.0), 0 0 24px rgba(124,92,255,.10);
+    animation:breathe 3.8s ease-in-out infinite;
+    transition:transform .15s ease;
+  }
+  #ask:active{transform:scale(.965)}
+  @keyframes breathe{
+    0%,100%{box-shadow:0 0 0 0 rgba(124,92,255,0), 0 0 18px rgba(124,92,255,.08)}
+    50%{box-shadow:0 0 0 1px rgba(124,92,255,.18), 0 0 34px rgba(124,92,255,.20)}
+  }
+  #ask svg{flex:none}
+  /* ---------- telemetry divider ---------- */
+  .tele{
+    z-index:5;margin:20px 2px 12px;
+    display:flex;align-items:center;gap:clamp(6px,1.8vw,10px);
+    min-width:0;
+  }
+  .tele .line{flex:1 1 0;min-width:6px;height:1px;background:linear-gradient(90deg,transparent,var(--hair),transparent)}
+  .tele span{flex:0 1 auto;font-size:clamp(6px,1.85vw,7.5px);letter-spacing:.4em;text-indent:.4em;color:var(--ink-faint);white-space:nowrap;overflow:hidden;min-width:0}
+  /* ---------- vitals ---------- */
+  #vitals{
+    z-index:5;
+    display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;
+  }
+  .vital{display:flex;flex-direction:column;align-items:center;gap:7px;min-width:0;max-width:100%}
+  .gauge{width:34px;height:34px;position:relative}
+  .gauge svg{width:100%;height:100%;transform:rotate(-90deg)}
+  .gauge .track{fill:none;stroke:rgba(233,230,244,.09);stroke-width:1.6}
+  .gauge .val{
+    fill:none;stroke:rgba(233,230,244,.78);stroke-width:1.6;stroke-linecap:round;
+    stroke-dasharray:0 100;
+    animation:arc 1.6s cubic-bezier(.3,.8,.2,1) forwards;
+  }
+  @keyframes arc{to{stroke-dasharray:var(--fill) 100}}
+  .gauge .tick{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-family:var(--mono);font-size:7.5px;color:var(--ink-faint);letter-spacing:0;
+  }
+  .v-num{font-family:var(--mono);font-size:clamp(10.5px,3.3vw,12.5px);font-weight:400;color:var(--ink);letter-spacing:.02em;white-space:nowrap;max-width:100%}
+  .v-num small{font-size:.72em;color:var(--ink-dim)}
+  .v-delta{font-family:var(--mono);font-size:clamp(7.5px,2.2vw,8.5px);color:var(--acc2);text-shadow:0 0 8px rgba(192,38,211,.45);white-space:nowrap;max-width:100%}
+  .v-label{font-size:clamp(6px,1.85vw,7px);letter-spacing:.3em;text-indent:.3em;color:var(--ink-faint);margin-top:-2px;white-space:nowrap;max-width:100%}
+  /* ---------- crew ---------- */
+  #crew{
+    z-index:5;margin-top:18px;padding-top:14px;
+    border-top:1px solid var(--hair);
+    display:grid;grid-template-columns:repeat(7,minmax(0,1fr));column-gap:2px;
+  }
+  .agent{display:flex;flex-direction:column;align-items:center;gap:7px;min-width:0;max-width:100%}
+  .pip{width:6px;height:6px;border-radius:50%;position:relative}
+  .pip.online{background:var(--green);box-shadow:0 0 7px rgba(61,214,140,.65)}
+  .pip.idle{background:var(--idle)}
+  .pip.working{
+    background:var(--acc2);
+    box-shadow:0 0 9px rgba(192,38,211,.85);
+    animation:livedot 1.6s ease-in-out infinite;
+  }
+  .pip.working::after{
+    content:"";position:absolute;inset:-5px;border-radius:50%;
+    border:1px solid rgba(192,38,211,.4);
+    animation:ringex 1.6s ease-out infinite;
+  }
+  @keyframes ringex{0%{transform:scale(.4);opacity:.9}100%{transform:scale(1.25);opacity:0}}
+  .agent span{font-size:clamp(5px,1.55vw,7px);letter-spacing:.18em;text-indent:.18em;color:var(--ink-faint);white-space:nowrap;max-width:100%;overflow:hidden}
+  .agent.self span{color:var(--ink-dim)}
+  /* ---------- atmosphere ---------- */
+  #vignette{
+    position:fixed;inset:0;pointer-events:none;z-index:8;
+    background:
+      radial-gradient(130% 100% at 50% 38%, transparent 52%, rgba(0,0,0,.52) 100%),
+      linear-gradient(180deg, rgba(0,0,0,.35), transparent 12%, transparent 86%, rgba(0,0,0,.4));
+  }
+  #grain{
+    position:fixed;inset:-50%;width:200%;height:200%;
+    pointer-events:none;z-index:9;opacity:.5;
+    mix-blend-mode:overlay;
+    animation:grain 1.2s steps(4) infinite;
+  }
+  @keyframes grain{
+    0%{transform:translate(0,0)}25%{transform:translate(-1.2%,1%)}
+    50%{transform:translate(1%,-.8%)}75%{transform:translate(-.6%,-1.2%)}100%{transform:translate(0,0)}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{animation-duration:.01ms !important;animation-iteration-count:1 !important}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <header>
+    <div class="wordmark">OLYMPUS</div>
+    <div class="hdr-right">
+      <span class="clock">14:32:07</span>
+      <span class="demo">DEMO</span>
+    </div>
+  </header>
+
+  <div id="stage">
+    <div id="orbWrap">
+      <canvas id="orb"></canvas>
+    </div>
+    <div class="designation">J.A.R.V.I.S — CHIEF OF STAFF</div>
+  </div>
+
+  <section id="brief">
+    <div class="tx-tag">
+      <span class="tx-dot"></span>
+      <span class="tx-label"><b>JARVIS</b>&nbsp;&nbsp;·&nbsp;&nbsp;TRANSMISSION&nbsp;&nbsp;·&nbsp;&nbsp;14:32</span>
+    </div>
+    <div class="bubble"><span id="briefText"></span><span class="caret" id="caret"></span></div>
+  </section>
+
+  <button id="ask" aria-label="Ask JARVIS">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#a78dff" stroke-width="1.4" stroke-linecap="round">
+      <rect x="9" y="2.5" width="6" height="12" rx="3"/>
+      <path d="M5 11.5a7 7 0 0 0 14 0"/>
+      <path d="M12 18.5v3"/>
+    </svg>
+    ASK JARVIS
+  </button>
+
+  <div class="tele">
+    <span>LIVE TELEMETRY</span>
+    <div class="line"></div>
+    <span>ALL SYSTEMS NOMINAL</span>
+  </div>
+
+  <section id="vitals">
+    <div class="vital">
+      <div class="gauge" style="--fill:72">
+        <svg viewBox="0 0 36 36"><circle class="track" cx="18" cy="18" r="15.9"/><circle class="val" cx="18" cy="18" r="15.9"/></svg>
+        <div class="tick">72</div>
+      </div>
+      <div class="v-num"><small>$</small>2,891</div>
+      <div class="v-delta">▲14%</div>
+      <div class="v-label">MRR</div>
+    </div>
+    <div class="vital">
+      <div class="gauge" style="--fill:31;animation-delay:.1s">
+        <svg viewBox="0 0 36 36"><circle class="track" cx="18" cy="18" r="15.9"/><circle class="val" cx="18" cy="18" r="15.9" style="animation-delay:.12s"/></svg>
+        <div class="tick">31</div>
+      </div>
+      <div class="v-num"><small>$</small>497</div>
+      <div class="v-delta" style="color:var(--ink-faint);text-shadow:none">—</div>
+      <div class="v-label">TODAY</div>
+    </div>
+    <div class="vital">
+      <div class="gauge" style="--fill:58">
+        <svg viewBox="0 0 36 36"><circle class="track" cx="18" cy="18" r="15.9"/><circle class="val" cx="18" cy="18" r="15.9" style="animation-delay:.24s"/></svg>
+        <div class="tick">58</div>
+      </div>
+      <div class="v-num">7</div>
+      <div class="v-delta" style="color:var(--ink-faint);text-shadow:none">—</div>
+      <div class="v-label">CLIENTS</div>
+    </div>
+    <div class="vital">
+      <div class="gauge" style="--fill:84">
+        <svg viewBox="0 0 36 36"><circle class="track" cx="18" cy="18" r="15.9"/><circle class="val" cx="18" cy="18" r="15.9" style="animation-delay:.36s"/></svg>
+        <div class="tick">84</div>
+      </div>
+      <div class="v-num">142</div>
+      <div class="v-delta" style="color:var(--ink-faint);text-shadow:none">0 MISSED</div>
+      <div class="v-label">AI CALLS</div>
+    </div>
+    <div class="vital">
+      <div class="gauge" style="--fill:66">
+        <svg viewBox="0 0 36 36"><circle class="track" cx="18" cy="18" r="15.9"/><circle class="val" cx="18" cy="18" r="15.9" style="animation-delay:.48s"/></svg>
+        <div class="tick">66</div>
+      </div>
+      <div class="v-num">23</div>
+      <div class="v-delta">▲NEW</div>
+      <div class="v-label">LEADS</div>
+    </div>
+  </section>
+
+  <section id="crew">
+    <div class="agent self"><span class="pip working"></span><span>JARVIS</span></div>
+    <div class="agent"><span class="pip online"></span><span>ATLAS</span></div>
+    <div class="agent"><span class="pip online"></span><span>SENTINEL</span></div>
+    <div class="agent"><span class="pip working"></span><span>SARA</span></div>
+    <div class="agent"><span class="pip idle"></span><span>SCOUT</span></div>
+    <div class="agent"><span class="pip online"></span><span>ARGUS</span></div>
+    <div class="agent"><span class="pip idle"></span><span>SAUL</span></div>
+  </section>
+
+</div>
+
+<div id="vignette"></div>
+<div id="grain"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============================================================
+   THE ORB — plasma sphere, Canvas 2D, additive compositing
+   ============================================================ */
+var cv = document.getElementById('orb');
+var ctx = cv.getContext('2d');
+var DPR = Math.min(window.devicePixelRatio||1, 2);
+var W=0, H=0, CX=0, CY=0, R=0;
+
+function size(){
+  var wrap = document.getElementById('orbWrap');
+  var rect = wrap.getBoundingClientRect();
+  W = Math.round(rect.width*1.6); H = Math.round(rect.height*1.6);
+  cv.width = W*DPR; cv.height = H*DPR;
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  CX = W/2; CY = H/2;
+  R  = (rect.width/2)*0.92;
+}
+size();
+window.addEventListener('resize', size);
+
+/* ---- soft-dot sprites (pre-rendered for speed) ---- */
+function sprite(stops){
+  var s = document.createElement('canvas'); s.width=s.height=64;
+  var c = s.getContext('2d');
+  var g = c.createRadialGradient(32,32,0,32,32,32);
+  for(var i=0;i<stops.length;i++) g.addColorStop(stops[i][0], stops[i][1]);
+  c.fillStyle=g; c.fillRect(0,0,64,64);
+  return s;
+}
+var SP_VIOLET  = sprite([[0,'rgba(255,255,255,1)'],[.22,'rgba(167,141,255,.95)'],[.55,'rgba(124,92,255,.32)'],[1,'rgba(124,92,255,0)']]);
+var SP_MAGENTA = sprite([[0,'rgba(255,255,255,1)'],[.22,'rgba(232,121,249,.95)'],[.55,'rgba(192,38,211,.30)'],[1,'rgba(192,38,211,0)']]);
+var SP_WHITE   = sprite([[0,'rgba(255,255,255,1)'],[.3,'rgba(244,240,255,.8)'],[1,'rgba(244,240,255,0)']]);
+var SPRITES = [SP_VIOLET, SP_MAGENTA, SP_WHITE];
+
+/* ---- particle field: fibonacci sphere shell + inner dust ---- */
+var SHELL_N = 560, DUST_N = 90;
+var pts = [];
+var GA = Math.PI*(3-Math.sqrt(5));
+for(var i=0;i<SHELL_N;i++){
+  var y = 1 - (i/(SHELL_N-1))*2;
+  var rad = Math.sqrt(1-y*y);
+  var th = GA*i;
+  var jitter = 0.965 + (((i*2654435761)>>>16 & 255)/255)*0.06;
+  pts.push({
+    x:Math.cos(th)*rad*jitter, y:y*jitter, z:Math.sin(th)*rad*jitter,
+    ph:(i*0.71)%6.283, sp:0.6+((i*97)%100)/100*1.5,
+    si:(i%10===0)?2:(i%3===0?1:0),
+    sz:0.8+((i*53)%100)/100*1.5,
+    shell:true
+  });
+}
+for(var d=0; d<DUST_N; d++){
+  var u=Math.random()*2-1, t2=Math.random()*6.283, rr=0.28+Math.random()*0.52;
+  var rxy=Math.sqrt(1-u*u);
+  pts.push({
+    x:Math.cos(t2)*rxy*rr, y:u*rr, z:Math.sin(t2)*rxy*rr,
+    ph:Math.random()*6.283, sp:0.8+Math.random()*1.6,
+    si:(d%4===0)?2:0, sz:0.6+Math.random()*1.1, shell:false
+  });
+}
+
+/* ---- plasma cells: slow blobs orbiting inside the core ---- */
+var cells=[];
+for(var c2=0;c2<6;c2++){
+  cells.push({a:Math.random()*6.283, b:Math.random()*6.283,
+              s1:0.10+Math.random()*0.16, s2:0.07+Math.random()*0.13,
+              r:0.16+Math.random()*0.22, hue:c2%2});
+}
+
+/* ---- embers: sparks that escape the surface and rise ---- */
+var embers=[];
+for(var e=0;e<22;e++){
+  embers.push({t:Math.random(), x:0, dx:(Math.random()-0.5)*0.5,
+               startA:Math.random()*6.283, sp:0.05+Math.random()*0.09,
+               si:e%3===0?1:0});
+}
+
+/* ---- speak envelope: orb flares while JARVIS talks ---- */
+var speak = 1, speakTarget = 1;
+
+var proj = {x:0,y:0,s:0};
+function project(p, sinA, cosA, sinB, cosB){
+  // rotate Y
+  var x = p.x*cosA + p.z*sinA;
+  var z = -p.x*sinA + p.z*cosA;
+  // rotate X (tilt)
+  var y = p.y*cosB - z*sinB;
+  z = p.y*sinB + z*cosB;
+  var persp = 2.6/(2.6 - z);
+  proj.x = CX + x*R*persp;
+  proj.y = CY + y*R*persp;
+  proj.s = persp;
+  return z;
+}
+
+function drawDot(spr, x, y, size2, alpha){
+  if(alpha<=0.004) return;
+  ctx.globalAlpha = Math.min(alpha,1);
+  ctx.drawImage(spr, x-size2, y-size2, size2*2, size2*2);
+}
+
+var T0 = performance.now();
+function frame(now){
+  var t = (now-T0)/1000;
+  speak += (speakTarget-speak)*0.02;
+  var level = 0.62 + speak*0.38;            // master energy 0.62..1
+  var breath = 1 + 0.014*Math.sin(t*1.25);
+  var Rb = R*breath;
+
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  ctx.clearRect(0,0,W,H);
+  ctx.globalCompositeOperation='lighter';
+
+  var rotA = t*0.16;
+  var tilt = 0.34 + 0.06*Math.sin(t*0.09);
+  var sinA=Math.sin(rotA), cosA=Math.cos(rotA);
+  var sinB=Math.sin(tilt), cosB=Math.cos(tilt);
+
+  /* -- outer bloom -- */
+  var g = ctx.createRadialGradient(CX,CY,Rb*0.1, CX,CY,Rb*2.0);
+  g.addColorStop(0,'rgba(124,92,255,'+(0.13*level)+')');
+  g.addColorStop(0.45,'rgba(124,92,255,'+(0.055*level)+')');
+  g.addColorStop(1,'rgba(124,92,255,0)');
+  ctx.globalAlpha=1; ctx.fillStyle=g;
+  ctx.fillRect(CX-Rb*2.1, CY-Rb*2.1, Rb*4.2, Rb*4.2);
+
+  /* -- depth-sort particles -- */
+  var back=[], front=[];
+  for(var i=0;i<pts.length;i++){
+    var p=pts[i];
+    var z = project(p,sinA,cosA,sinB,cosB);
+    var rim = p.shell ? Math.pow(1-Math.min(Math.abs(z),1), 1.7) : 0;
+    var tw = 0.55 + 0.45*Math.sin(t*p.sp*(1+speak*0.5) + p.ph);
+    var a = (p.shell ? (0.16 + 0.72*rim) : 0.20) * tw * level;
+    var s = p.sz * (2.0 + rim*2.6) * proj.s * (Rb/170);
+    var rec = {x:proj.x, y:proj.y, s:s, a:a, si:p.si, z:z};
+    (z<0?back:front).push(rec);
+  }
+  back.sort(function(a,b){return a.z-b.z});
+  front.sort(function(a,b){return a.z-b.z});
+
+  /* -- back hemisphere (dimmed by the core ahead of it) -- */
+  for(i=0;i<back.length;i++){
+    var b=back[i];
+    drawDot(SPRITES[b.si], b.x, b.y, b.s, b.a*0.45);
+  }
+
+  /* -- plasma core -- */
+  var coreR = Rb*(0.50 + 0.07*speak + 0.018*Math.sin(t*2.1));
+  g = ctx.createRadialGradient(CX,CY,0, CX,CY,coreR);
+  g.addColorStop(0,'rgba(255,255,255,'+(0.85*level)+')');
+  g.addColorStop(0.18,'rgba(214,196,255,'+(0.55*level)+')');
+  g.addColorStop(0.5,'rgba(124,92,255,'+(0.26*level)+')');
+  g.addColorStop(1,'rgba(124,92,255,0)');
+  ctx.globalAlpha=1; ctx.fillStyle=g;
+  ctx.beginPath(); ctx.arc(CX,CY,coreR,0,6.283); ctx.fill();
+
+  /* -- hot nucleus -- */
+  g = ctx.createRadialGradient(CX,CY,0, CX,CY,coreR*0.30);
+  g.addColorStop(0,'rgba(255,255,255,'+(0.95*level)+')');
+  g.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle=g;
+  ctx.beginPath(); ctx.arc(CX,CY,coreR*0.30,0,6.283); ctx.fill();
+
+  /* -- roaming plasma cells (living interior) -- */
+  for(i=0;i<cells.length;i++){
+    var cl=cells[i];
+    var px = CX + Math.sin(t*cl.s1+cl.a)*Rb*0.40;
+    var py = CY + Math.sin(t*cl.s2+cl.b)*Rb*0.34;
+    var cr = Rb*cl.r*(0.85+0.15*Math.sin(t*0.9+cl.a));
+    g = ctx.createRadialGradient(px,py,0,px,py,cr);
+    if(cl.hue===0){
+      g.addColorStop(0,'rgba(167,141,255,'+(0.20*level)+')');
+      g.addColorStop(1,'rgba(167,141,255,0)');
+    }else{
+      g.addColorStop(0,'rgba(217,70,239,'+(0.16*level)+')');
+      g.addColorStop(1,'rgba(217,70,239,0)');
+    }
+    ctx.fillStyle=g;
+    ctx.beginPath(); ctx.arc(px,py,cr,0,6.283); ctx.fill();
+  }
+
+  /* -- fresnel atmosphere shell -- */
+  g = ctx.createRadialGradient(CX,CY,Rb*0.66, CX,CY,Rb*1.18);
+  g.addColorStop(0,'rgba(124,92,255,0)');
+  g.addColorStop(0.62,'rgba(124,92,255,'+(0.05*level)+')');
+  g.addColorStop(0.80,'rgba(150,80,255,'+(0.16*level)+')');
+  g.addColorStop(0.86,'rgba(192,38,211,'+(0.30*level)+')');
+  g.addColorStop(0.93,'rgba(192,38,211,'+(0.10*level)+')');
+  g.addColorStop(1,'rgba(192,38,211,0)');
+  ctx.fillStyle=g;
+  ctx.beginPath(); ctx.arc(CX,CY,Rb*1.18,0,6.283); ctx.fill();
+
+  /* -- bright rim accent (key-light arc, upper left) -- */
+  ctx.save();
+  ctx.lineCap='round';
+  ctx.shadowColor='rgba(167,141,255,.9)';
+  ctx.shadowBlur=14;
+  ctx.strokeStyle='rgba(225,212,255,'+(0.38*level)+')';
+  ctx.lineWidth=1.4;
+  ctx.beginPath();
+  ctx.arc(CX,CY,Rb*1.005, Math.PI*1.08 + 0.1*Math.sin(t*0.4), Math.PI*1.72 + 0.1*Math.sin(t*0.4));
+  ctx.stroke();
+  ctx.strokeStyle='rgba(232,121,249,'+(0.20*level)+')';
+  ctx.lineWidth=1;
+  ctx.beginPath();
+  ctx.arc(CX,CY,Rb*1.005, Math.PI*0.12+0.08*Math.sin(t*0.33), Math.PI*0.5+0.08*Math.sin(t*0.33));
+  ctx.stroke();
+  ctx.restore();
+
+  /* -- front hemisphere -- */
+  for(i=0;i<front.length;i++){
+    var f=front[i];
+    drawDot(SPRITES[f.si], f.x, f.y, f.s, f.a);
+  }
+
+  /* -- escaping embers -- */
+  for(i=0;i<embers.length;i++){
+    var em=embers[i];
+    em.t += em.sp/100*(1+speak*0.6);
+    if(em.t>1){ em.t=0; em.startA=Math.random()*6.283; em.dx=(Math.random()-0.5)*0.5; }
+    var ex = CX + Math.cos(em.startA)*Rb*0.86 + em.dx*Rb*em.t;
+    var ey = CY + Math.sin(em.startA)*Rb*0.86*0.4 - Rb*(0.18+em.t*0.85);
+    var ea = Math.sin(em.t*Math.PI)*0.5*level;
+    drawDot(SPRITES[em.si===1?1:0], ex, ey, 1.6*(Rb/170)*(1-em.t*0.4), ea);
+  }
+
+  ctx.globalAlpha=1;
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+/* ============================================================
+   FILM GRAIN
+   ============================================================ */
+(function(){
+  var n=document.createElement('canvas'); n.width=n.height=128;
+  var c=n.getContext('2d'); var img=c.createImageData(128,128);
+  for(var i=0;i<img.data.length;i+=4){
+    var v=Math.random()*255|0;
+    img.data[i]=img.data[i+1]=img.data[i+2]=v; img.data[i+3]=14;
+  }
+  c.putImageData(img,0,0);
+  document.getElementById('grain').style.background='url('+n.toDataURL()+')';
+})();
+
+/* ============================================================
+   TRANSMISSION — staggered word reveal, orb speaks along
+   ============================================================ */
+var BRIEF = "Good afternoon, Frank. Revenue\u2019s up 14% to $2,891. SARA handled 142 calls and captured 23 leads \u2014 none missed. Nothing needs you right now.";
+var host = document.getElementById('briefText');
+var words = BRIEF.split(' ');
+var DELAY0 = 350, STEP = 105;
+for(var wi=0; wi<words.length; wi++){
+  var sp = document.createElement('span');
+  sp.className = 'w' + (/[\d$%,]/.test(words[wi]) ? ' num' : '');
+  sp.textContent = words[wi] + (wi<words.length-1 ? ' ' : '');
+  sp.style.animationDelay = (DELAY0 + wi*STEP) + 'ms';
+  host.appendChild(sp);
+}
+var speakDur = DELAY0 + words.length*STEP + 800;
+speakTarget = 1;
+setTimeout(function(){
+  speakTarget = 0;                                  // settle to idle hum
+  document.getElementById('caret').style.display='none';
+}, speakDur);
+
+/* ask button flares the orb */
+document.getElementById('ask').addEventListener('pointerdown', function(){
+  speakTarget = 1;
+  setTimeout(function(){ speakTarget=0; }, 2600);
+});
+
+/* live clock */
+(function(){
+  var el=document.querySelector('.clock'); var s=7;
+  setInterval(function(){
+    s=(s+1)%60;
+    el.textContent='14:32:'+(s<10?'0':'')+s;
+  },1000);
+})();
+
+})();
+</script>
+</body>
+</html>
