@@ -15,6 +15,7 @@
     --green:#3dd68c;
     --idle:#3a3650;
     --hair:rgba(233,230,244,.08);
+    --hair2:rgba(233,230,244,.16);
     --mono:"SF Mono","Cascadia Code",ui-monospace,Menlo,Consolas,monospace;
     --sans:"Helvetica Neue",Helvetica,"Segoe UI",Arial,sans-serif;
   }
@@ -47,20 +48,48 @@
   /* every block in the column may shrink below content width — nothing
      is allowed to lay out wider than the phone */
   #app > *{min-width:0;max-width:100%}
+  /* ---------- HUD frame: corner brackets ---------- */
+  #frame{position:absolute;inset:7px;pointer-events:none;z-index:6}
+  #frame i{position:absolute;width:14px;height:14px;border:0 solid var(--hair2)}
+  #frame i:nth-child(1){top:0;left:0;border-top-width:1px;border-left-width:1px}
+  #frame i:nth-child(2){top:0;right:0;border-top-width:1px;border-right-width:1px}
+  #frame i:nth-child(3){bottom:0;left:0;border-bottom-width:1px;border-left-width:1px}
+  #frame i:nth-child(4){bottom:0;right:0;border-bottom-width:1px;border-right-width:1px}
+  #frame i:nth-child(2)::after{ /* one quiet accent tick, upper right */
+    content:"";position:absolute;top:-1px;right:8px;width:6px;height:1px;
+    background:var(--acc1);box-shadow:0 0 6px rgba(124,92,255,.8);
+  }
   /* ---------- header ---------- */
   header{
-    display:flex;align-items:center;justify-content:space-between;
+    display:flex;align-items:baseline;justify-content:space-between;
     z-index:5;
   }
-  .wordmark{
-    font-size:12px;font-weight:200;letter-spacing:.62em;text-indent:.62em;
-    color:var(--ink-dim);
+  .hdr-left{display:flex;align-items:center;gap:9px;min-width:0}
+  .hdr-glyph{
+    flex:none;width:5px;height:5px;transform:rotate(45deg);
+    background:linear-gradient(135deg,var(--acc1),var(--acc2));
+    box-shadow:0 0 8px rgba(124,92,255,.65);
   }
-  .hdr-right{display:flex;align-items:center;gap:10px}
+  .wordmark{
+    font-size:11px;font-weight:200;letter-spacing:.58em;text-indent:.58em;
+    color:var(--ink-dim);white-space:nowrap;
+  }
+  .hdr-sub{
+    font-family:var(--mono);font-size:7px;letter-spacing:.3em;
+    color:var(--ink-faint);white-space:nowrap;overflow:hidden;
+  }
+  .hdr-right{display:flex;align-items:baseline;gap:12px}
   .clock{font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--ink-faint)}
-  .demo{
-    font-size:8px;letter-spacing:.34em;text-indent:.34em;color:var(--ink-dim);
-    border:1px solid var(--hair);border-radius:99px;padding:4px 8px 3px 10px;
+  .demo{font-family:var(--mono);font-size:8px;letter-spacing:.2em;color:var(--ink-faint);white-space:nowrap}
+  /* graduated rule under header — instrument bezel */
+  .hdr-rule{position:relative;z-index:5;height:4px;margin-top:10px}
+  .hdr-rule::before{
+    content:"";position:absolute;top:0;left:0;right:0;height:1px;
+    background:linear-gradient(90deg, rgba(124,92,255,.4), var(--hair) 26%, var(--hair) 74%, transparent);
+  }
+  .hdr-rule::after{
+    content:"";position:absolute;top:1px;left:0;right:0;height:3px;opacity:.65;
+    background:repeating-linear-gradient(90deg, var(--hair) 0 1px, transparent 1px 26px);
   }
   /* ---------- orb stage ---------- */
   #stage{
@@ -76,100 +105,163 @@
     background:radial-gradient(50% 100% at 50% 50%, rgba(124,92,255,.14), transparent 72%);
     filter:blur(6px);pointer-events:none;
   }
-  /* designation under orb */
+  /* designation under orb — engraved nameplate */
   .designation{
     position:absolute;left:50%;bottom:-2px;transform:translateX(-50%);
-    font-size:8px;letter-spacing:.5em;text-indent:.5em;color:var(--ink-faint);
-    white-space:nowrap;z-index:4;
+    display:flex;align-items:center;gap:11px;
+    font-family:var(--mono);font-size:7.5px;letter-spacing:.42em;text-indent:.42em;
+    color:var(--ink-faint);white-space:nowrap;z-index:4;
   }
-  /* ---------- transmission ---------- */
-  #brief{position:relative;z-index:5;margin-top:2px}
-  .tx-tag{
-    display:flex;align-items:center;gap:8px;margin:0 2px 9px;
+  .designation::before,.designation::after{
+    content:"";flex:none;width:20px;height:1px;
+  }
+  .designation::before{background:linear-gradient(90deg, transparent, var(--hair2))}
+  .designation::after{background:linear-gradient(90deg, var(--hair2), transparent)}
+  /* ---------- transmission — floating HUD text, no card ---------- */
+  #brief{position:relative;z-index:5;margin-top:4px}
+  #brief::after{ /* quiet closing corner, lower right */
+    content:"";position:absolute;right:0;bottom:-2px;width:10px;height:10px;
+    border-right:1px solid var(--hair2);border-bottom:1px solid var(--hair2);
+  }
+  .tx-head{
+    display:flex;align-items:center;gap:9px;margin:0 1px 9px;
+    font-family:var(--mono);min-width:0;
   }
   .tx-dot{
-    width:5px;height:5px;border-radius:50%;
+    flex:none;width:4px;height:4px;border-radius:50%;
     background:var(--acc2);
     box-shadow:0 0 8px 1px rgba(192,38,211,.7);
     animation:livedot 2.2s ease-in-out infinite;
   }
   @keyframes livedot{0%,100%{opacity:1}50%{opacity:.35}}
   .tx-label{
-    font-size:clamp(7px,2.1vw,8px);letter-spacing:.36em;color:var(--ink-faint);
+    flex:none;font-size:clamp(6.5px,2vw,7.5px);letter-spacing:.32em;color:var(--ink-faint);
     white-space:nowrap;overflow:hidden;min-width:0;
   }
-  .tx-label b{font-weight:300;color:var(--ink-dim)}
-  .bubble{
+  .tx-label b{font-weight:400;color:var(--ink-dim)}
+  .tx-line{flex:1 1 0;min-width:6px;height:1px;background:linear-gradient(90deg,var(--hair),transparent)}
+  .tx-id{
+    flex:none;font-size:clamp(6px,1.8vw,7px);letter-spacing:.22em;color:var(--ink-faint);
+    white-space:nowrap;
+  }
+  .tx-body{
     position:relative;
-    border:1px solid var(--hair);
-    border-radius:3px 20px 20px 20px;
-    padding:16px 18px 17px;
-    background:linear-gradient(180deg, rgba(233,230,244,.035), rgba(233,230,244,.015));
-    font-size:clamp(13.5px,4.1vw,15.5px);font-weight:200;line-height:1.62;
+    padding:3px 12px 4px 15px;
+    font-size:clamp(13.5px,4.1vw,15.5px);font-weight:200;line-height:1.64;
     letter-spacing:.012em;color:var(--ink);
     max-width:100%;min-width:0;
     overflow-wrap:break-word;word-break:break-word;
   }
-  .bubble::before{ /* hairline uplight on top edge */
-    content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
-    background:linear-gradient(180deg, rgba(233,230,244,.05), transparent 18%);
+  .tx-body::before{ /* energized rule down the left — the voice itself */
+    content:"";position:absolute;left:0;top:3px;bottom:3px;width:1px;
+    background:linear-gradient(180deg, rgba(124,92,255,.75), rgba(192,38,211,.28) 55%, transparent);
+    box-shadow:0 0 9px rgba(124,92,255,.4);
   }
-  .bubble .w{opacity:1}
+  .tx-body::after{ /* opening tick off the rule */
+    content:"";position:absolute;left:0;top:3px;width:9px;height:1px;
+    background:rgba(124,92,255,.75);
+  }
+  .tx-body .w{opacity:0;animation:wfade .5s ease forwards}
   @keyframes wfade{to{opacity:1}}
-  .bubble .num{font-family:var(--mono);font-size:.88em;font-weight:400;color:#fff;letter-spacing:0}
+  .tx-body .num{font-family:var(--mono);font-size:.88em;font-weight:400;color:#fff;letter-spacing:0}
   .caret{
     display:inline-block;width:1px;height:1em;vertical-align:-.14em;margin-left:2px;
     background:var(--acc1);box-shadow:0 0 6px rgba(124,92,255,.9);
     animation:caret 1.1s step-end infinite;
   }
   @keyframes caret{0%,100%{opacity:1}50%{opacity:0}}
-  /* ---------- ask jarvis ---------- */
+  /* ---------- ask jarvis — command line ---------- */
   #ask{
-    z-index:5;margin:16px auto 0;
-    display:flex;align-items:center;gap:12px;
-    border:1px solid rgba(124,92,255,.38);
-    border-radius:999px;
-    padding:14px 30px 14px 24px;
-    background:
-      radial-gradient(120% 200% at 50% -60%, rgba(124,92,255,.22), transparent 60%),
-      rgba(124,92,255,.06);
-    color:var(--ink);
-    font-family:var(--sans);font-size:11px;font-weight:300;
-    letter-spacing:.42em;text-indent:.42em;
-    cursor:pointer;outline:none;
-    box-shadow:0 0 0 0 rgba(124,92,255,.0), 0 0 24px rgba(124,92,255,.10);
-    animation:breathe 3.8s ease-in-out infinite;
+    position:relative;z-index:5;margin-top:14px;width:100%;
+    display:flex;align-items:center;gap:11px;
+    border:1px solid var(--hair);border-radius:2px;
+    padding:13px 14px 13px 15px;
+    background:linear-gradient(180deg, rgba(233,230,244,.022), rgba(233,230,244,.008));
+    color:var(--ink);font-family:var(--mono);
+    cursor:pointer;outline:none;text-align:left;
     transition:transform .15s ease;
   }
-  #ask:active{transform:scale(.965)}
-  @keyframes breathe{
-    0%,100%{box-shadow:0 0 0 0 rgba(124,92,255,0), 0 0 18px rgba(124,92,255,.08)}
-    50%{box-shadow:0 0 0 1px rgba(124,92,255,.18), 0 0 34px rgba(124,92,255,.20)}
+  #ask:active{transform:scale(.985)}
+  #ask::before{ /* index tick, upper left */
+    content:"";position:absolute;top:-1px;left:10px;width:7px;height:1px;
+    background:var(--hair2);
   }
-  #ask svg{flex:none}
-  /* ---------- telemetry divider ---------- */
-  .tele{
-    z-index:5;margin:20px 2px 12px;
-    display:flex;align-items:center;gap:clamp(6px,1.8vw,10px);
-    min-width:0;
+  #ask::after{ /* live energy rail along the base */
+    content:"";position:absolute;left:9px;right:9px;bottom:-1px;height:1px;
+    background:linear-gradient(90deg, transparent, var(--acc1) 32%, var(--acc2) 68%, transparent);
+    filter:drop-shadow(0 0 5px rgba(124,92,255,.9));
+    animation:railbreathe 3.8s ease-in-out infinite;
   }
-  .tele .line{flex:1 1 0;min-width:6px;height:1px;background:linear-gradient(90deg,transparent,var(--hair),transparent)}
-  .tele span{flex:0 1 auto;font-size:clamp(6px,1.85vw,7.5px);letter-spacing:.4em;text-indent:.4em;color:var(--ink-faint);white-space:nowrap;overflow:hidden;min-width:0}
-  /* ---------- vitals ---------- */
+  @keyframes railbreathe{0%,100%{opacity:.4}50%{opacity:1}}
+  .ask-prompt{
+    flex:none;font-size:11px;font-weight:400;color:#a78dff;
+    text-shadow:0 0 9px rgba(124,92,255,.85);
+  }
+  .ask-text{
+    flex:none;font-size:10px;font-weight:400;letter-spacing:.36em;text-indent:.02em;
+    color:var(--ink-dim);white-space:nowrap;
+  }
+  .ask-caret{
+    flex:none;width:6px;height:12px;
+    background:rgba(124,92,255,.8);box-shadow:0 0 8px rgba(124,92,255,.8);
+    animation:caret 1.1s step-end infinite;
+  }
+  .ask-flex{flex:1 1 0;min-width:0}
+  #ask svg{flex:none;opacity:.8}
+  .ask-mode{
+    flex:none;font-size:6.5px;letter-spacing:.3em;text-indent:.3em;
+    color:var(--ink-faint);white-space:nowrap;
+  }
+  /* ---------- vitals — instrument cluster ---------- */
   #vitals{
-    z-index:5;
-    display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;
+    position:relative;z-index:5;margin-top:16px;
+    border-top:1px solid var(--hair);border-bottom:1px solid var(--hair);
+    padding-bottom:11px;
   }
-  .vital{display:flex;flex-direction:column;align-items:center;gap:7px;min-width:0;max-width:100%}
-  .gauge{width:34px;height:34px;position:relative}
-  .gauge svg{width:100%;height:100%;transform:rotate(-90deg)}
-  .gauge .track{fill:none;stroke:rgba(233,230,244,.09);stroke-width:1.6}
+  #vitals::before{ /* accent ticks keyed into the frame, top-left / bottom-right */
+    content:"";position:absolute;top:-1px;left:0;width:14px;height:1px;
+    background:rgba(167,141,255,.55);
+  }
+  #vitals::after{
+    content:"";position:absolute;bottom:-1px;right:0;width:14px;height:1px;
+    background:rgba(192,38,211,.45);
+  }
+  .vit-head{
+    display:flex;align-items:center;gap:9px;
+    padding:8px 1px 10px;min-width:0;
+    font-family:var(--mono);
+  }
+  .vit-head span{flex:0 1 auto;font-size:clamp(6px,1.85vw,7px);letter-spacing:.36em;text-indent:.36em;color:var(--ink-faint);white-space:nowrap;overflow:hidden;min-width:0}
+  .vit-head .line{flex:1 1 0;min-width:6px;height:1px;background:linear-gradient(90deg,transparent,var(--hair),transparent)}
+  .vit-head .ok{display:inline-flex;align-items:center;gap:6px}
+  .vit-head .ok i{
+    flex:none;width:3px;height:3px;border-radius:50%;
+    background:var(--green);box-shadow:0 0 6px rgba(61,214,140,.85);
+  }
+  .vit-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr))}
+  .vital{
+    position:relative;
+    display:flex;flex-direction:column;align-items:center;gap:6px;
+    min-width:0;max-width:100%;padding:1px 2px 0;
+  }
+  .vital + .vital::before{ /* hairline column dividers */
+    content:"";position:absolute;left:0;top:8%;bottom:10%;width:1px;
+    background:linear-gradient(180deg, transparent, var(--hair), transparent);
+  }
+  /* open-arc reactor readouts: 270° sweep, gap at base */
+  .gauge{width:37px;height:37px;position:relative}
+  .gauge svg{width:100%;height:100%;transform:rotate(135deg)}
+  .gauge .bezel{ /* fine graduation ring */
+    fill:none;stroke:rgba(233,230,244,.10);stroke-width:1;
+    stroke-dasharray:.55 5.7;
+  }
+  .gauge .track{fill:none;stroke:rgba(233,230,244,.09);stroke-width:1;stroke-dasharray:75 100}
   .gauge .val{
-    fill:none;stroke:rgba(233,230,244,.78);stroke-width:1.6;stroke-linecap:round;
+    fill:none;stroke:rgba(233,230,244,.82);stroke-width:1.2;stroke-linecap:round;
     stroke-dasharray:0 100;
     animation:arc 1.6s cubic-bezier(.3,.8,.2,1) forwards;
   }
-  @keyframes arc{to{stroke-dasharray:var(--fill) 100}}
+  @keyframes arc{to{stroke-dasharray:calc(var(--fill) * .75) 100}}
   .gauge .tick{
     position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
     font-family:var(--mono);font-size:7.5px;color:var(--ink-faint);letter-spacing:0;
@@ -177,36 +269,45 @@
   .v-num{font-family:var(--mono);font-size:clamp(10.5px,3.3vw,12.5px);font-weight:400;color:var(--ink);letter-spacing:.02em;white-space:nowrap;max-width:100%}
   .v-num small{font-size:.72em;color:var(--ink-dim)}
   .v-delta{font-family:var(--mono);font-size:clamp(7.5px,2.2vw,8.5px);color:var(--acc2);text-shadow:0 0 8px rgba(192,38,211,.45);white-space:nowrap;max-width:100%}
-  .v-label{font-size:clamp(6px,1.85vw,7px);letter-spacing:.3em;text-indent:.3em;color:var(--ink-faint);margin-top:-2px;white-space:nowrap;max-width:100%}
-  /* ---------- crew ---------- */
-  #crew{
-    z-index:5;margin-top:18px;padding-top:14px;
-    border-top:1px solid var(--hair);
-    display:grid;grid-template-columns:repeat(7,minmax(0,1fr));column-gap:2px;
+  .v-label{font-family:var(--mono);font-size:clamp(5.5px,1.8vw,6.5px);letter-spacing:.3em;text-indent:.3em;color:var(--ink-faint);margin-top:-2px;white-space:nowrap;max-width:100%}
+  /* ---------- crew — signal manifest ---------- */
+  #crew{z-index:5;margin-top:12px}
+  .crew-head{
+    display:flex;align-items:center;gap:9px;margin:0 1px 10px;min-width:0;
+    font-family:var(--mono);
   }
-  .agent{display:flex;flex-direction:column;align-items:center;gap:7px;min-width:0;max-width:100%}
-  .pip{width:6px;height:6px;border-radius:50%;position:relative}
-  .pip.online{background:var(--green);box-shadow:0 0 7px rgba(61,214,140,.65)}
-  .pip.idle{background:var(--idle)}
-  .pip.working{
-    background:var(--acc2);
-    box-shadow:0 0 9px rgba(192,38,211,.85);
+  .crew-head span{flex:0 1 auto;font-size:clamp(6px,1.85vw,7px);letter-spacing:.32em;text-indent:.32em;color:var(--ink-faint);white-space:nowrap;overflow:hidden;min-width:0}
+  .crew-head .line{flex:1 1 0;min-width:6px;height:1px;background:linear-gradient(90deg,transparent,var(--hair),transparent)}
+  .crew-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));column-gap:2px}
+  .agent{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0;max-width:100%}
+  .sig{flex:none;width:6px;height:6px;transform:rotate(45deg);position:relative}
+  .sig.online{background:var(--green);box-shadow:0 0 7px rgba(61,214,140,.6)}
+  .sig.idle{border:1px solid var(--idle)}
+  .sig.working{
+    background:linear-gradient(135deg,var(--acc1),var(--acc2));
+    box-shadow:0 0 10px rgba(192,38,211,.85);
     animation:livedot 1.6s ease-in-out infinite;
   }
-  .pip.working::after{
-    content:"";position:absolute;inset:-5px;border-radius:50%;
+  .sig.working::after{ /* expanding diamond echo */
+    content:"";position:absolute;inset:-5px;
     border:1px solid rgba(192,38,211,.4);
     animation:ringex 1.6s ease-out infinite;
   }
-  @keyframes ringex{0%{transform:scale(.4);opacity:.9}100%{transform:scale(1.25);opacity:0}}
-  .agent span{font-size:clamp(5px,1.55vw,7px);letter-spacing:.18em;text-indent:.18em;color:var(--ink-faint);white-space:nowrap;max-width:100%;overflow:hidden}
-  .agent.self span{color:var(--ink-dim)}
+  @keyframes ringex{0%{transform:scale(.4);opacity:.9}100%{transform:scale(1.3);opacity:0}}
+  .agent .nm{font-family:var(--mono);font-size:clamp(5px,1.55vw,7px);letter-spacing:.16em;text-indent:.16em;color:var(--ink-faint);white-space:nowrap;max-width:100%;overflow:hidden}
+  .agent .st{font-family:var(--mono);font-size:5px;letter-spacing:.24em;text-indent:.24em;color:var(--ink-faint);opacity:.6;white-space:nowrap;max-width:100%;overflow:hidden}
+  .agent.self .nm{color:var(--ink-dim)}
+  .agent .st.tasked{color:var(--acc2);opacity:.85;text-shadow:0 0 7px rgba(192,38,211,.4)}
   /* ---------- atmosphere ---------- */
   #vignette{
     position:fixed;inset:0;pointer-events:none;z-index:8;
     background:
       radial-gradient(130% 100% at 50% 38%, transparent 52%, rgba(0,0,0,.52) 100%),
       linear-gradient(180deg, rgba(0,0,0,.35), transparent 12%, transparent 86%, rgba(0,0,0,.4));
+  }
+  #scan{ /* faint CRT scanlines over everything */
+    position:fixed;inset:0;pointer-events:none;z-index:8;opacity:.45;
+    background:repeating-linear-gradient(0deg, rgba(255,255,255,.016) 0 1px, transparent 1px 3px);
   }
   #grain{
     position:fixed;inset:-50%;width:200%;height:200%;
@@ -226,13 +327,20 @@
 <body>
 <div id="app">
 
+  <div id="frame"><i></i><i></i><i></i><i></i></div>
+
   <header>
-    <div class="wordmark">OLYMPUS</div>
+    <div class="hdr-left">
+      <span class="hdr-glyph"></span>
+      <span class="wordmark">OLYMPUS</span>
+      <span class="hdr-sub">// CMD·01</span>
+    </div>
     <div class="hdr-right">
       <span class="clock">14:32:07</span>
-      <span class="demo">DEMO</span>
+      <span class="demo">[ DEMO ]</span>
     </div>
   </header>
+  <div class="hdr-rule"></div>
 
   <div id="stage">
     <div id="orbWrap">
@@ -242,89 +350,104 @@
   </div>
 
   <section id="brief">
-    <div class="tx-tag">
+    <div class="tx-head">
       <span class="tx-dot"></span>
-      <span class="tx-label"><b>JARVIS</b>&nbsp;&nbsp;·&nbsp;&nbsp;TRANSMISSION&nbsp;&nbsp;·&nbsp;&nbsp;14:32</span>
+      <span class="tx-label">TX·041&nbsp;&nbsp;<b>JARVIS</b>&nbsp;&nbsp;14:32</span>
+      <span class="tx-line"></span>
+      <span class="tx-id">SIG 99.2</span>
     </div>
-    <div class="bubble"><span id="briefText"></span><span class="caret" id="caret"></span></div>
+    <div class="tx-body"><span id="briefText"></span><span class="caret" id="caret"></span></div>
   </section>
 
   <button id="ask" aria-label="Ask JARVIS">
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#a78dff" stroke-width="1.4" stroke-linecap="round">
+    <span class="ask-prompt">&#10095;</span>
+    <span class="ask-text">ASK JARVIS</span>
+    <span class="ask-caret"></span>
+    <span class="ask-flex"></span>
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#a78dff" stroke-width="1.4" stroke-linecap="round">
       <rect x="9" y="2.5" width="6" height="12" rx="3"/>
       <path d="M5 11.5a7 7 0 0 0 14 0"/>
       <path d="M12 18.5v3"/>
     </svg>
-    ASK JARVIS
+    <span class="ask-mode">VOICE READY</span>
   </button>
 
-  <div class="tele">
-    <span>LIVE TELEMETRY</span>
-    <div class="line"></div>
-    <span>ALL SYSTEMS NOMINAL</span>
-  </div>
-
   <section id="vitals">
-    <div class="vital">
-      <div class="gauge" style="--fill:72">
-        <svg viewBox="0 0 36 36"><circle class="track" cx="18" cy="18" r="15.9"/><circle class="val" cx="18" cy="18" r="15.9"/></svg>
-        <div class="tick">72</div>
-      </div>
-      <div class="v-num"><small>$</small>2,891</div>
-      <div class="v-delta">▲14%</div>
-      <div class="v-label">MRR</div>
+    <div class="vit-head">
+      <span>LIVE TELEMETRY</span>
+      <div class="line"></div>
+      <span class="ok"><i></i>ALL SYSTEMS NOMINAL</span>
     </div>
-    <div class="vital">
-      <div class="gauge" style="--fill:31;animation-delay:.1s">
-        <svg viewBox="0 0 36 36"><circle class="track" cx="18" cy="18" r="15.9"/><circle class="val" cx="18" cy="18" r="15.9" style="animation-delay:.12s"/></svg>
-        <div class="tick">31</div>
+    <div class="vit-grid">
+      <div class="vital">
+        <div class="gauge" style="--fill:72">
+          <svg viewBox="0 0 36 36"><circle class="bezel" cx="18" cy="18" r="13" pathLength="100"/><circle class="track" cx="18" cy="18" r="15.9" pathLength="100"/><circle class="val" cx="18" cy="18" r="15.9" pathLength="100"/></svg>
+          <div class="tick">72</div>
+        </div>
+        <div class="v-num"><small>$</small>2,891</div>
+        <div class="v-delta">▲14%</div>
+        <div class="v-label">MRR</div>
       </div>
-      <div class="v-num"><small>$</small>497</div>
-      <div class="v-delta" style="color:var(--ink-faint);text-shadow:none">—</div>
-      <div class="v-label">TODAY</div>
-    </div>
-    <div class="vital">
-      <div class="gauge" style="--fill:58">
-        <svg viewBox="0 0 36 36"><circle class="track" cx="18" cy="18" r="15.9"/><circle class="val" cx="18" cy="18" r="15.9" style="animation-delay:.24s"/></svg>
-        <div class="tick">58</div>
+      <div class="vital">
+        <div class="gauge" style="--fill:31">
+          <svg viewBox="0 0 36 36"><circle class="bezel" cx="18" cy="18" r="13" pathLength="100"/><circle class="track" cx="18" cy="18" r="15.9" pathLength="100"/><circle class="val" cx="18" cy="18" r="15.9" pathLength="100" style="animation-delay:.12s"/></svg>
+          <div class="tick">31</div>
+        </div>
+        <div class="v-num"><small>$</small>497</div>
+        <div class="v-delta" style="color:var(--ink-faint);text-shadow:none">—</div>
+        <div class="v-label">TODAY</div>
       </div>
-      <div class="v-num">7</div>
-      <div class="v-delta" style="color:var(--ink-faint);text-shadow:none">—</div>
-      <div class="v-label">CLIENTS</div>
-    </div>
-    <div class="vital">
-      <div class="gauge" style="--fill:84">
-        <svg viewBox="0 0 36 36"><circle class="track" cx="18" cy="18" r="15.9"/><circle class="val" cx="18" cy="18" r="15.9" style="animation-delay:.36s"/></svg>
-        <div class="tick">84</div>
+      <div class="vital">
+        <div class="gauge" style="--fill:58">
+          <svg viewBox="0 0 36 36"><circle class="bezel" cx="18" cy="18" r="13" pathLength="100"/><circle class="track" cx="18" cy="18" r="15.9" pathLength="100"/><circle class="val" cx="18" cy="18" r="15.9" pathLength="100" style="animation-delay:.24s"/></svg>
+          <div class="tick">58</div>
+        </div>
+        <div class="v-num">7</div>
+        <div class="v-delta" style="color:var(--ink-faint);text-shadow:none">—</div>
+        <div class="v-label">CLIENTS</div>
       </div>
-      <div class="v-num">142</div>
-      <div class="v-delta" style="color:var(--ink-faint);text-shadow:none">0 MISSED</div>
-      <div class="v-label">AI CALLS</div>
-    </div>
-    <div class="vital">
-      <div class="gauge" style="--fill:66">
-        <svg viewBox="0 0 36 36"><circle class="track" cx="18" cy="18" r="15.9"/><circle class="val" cx="18" cy="18" r="15.9" style="animation-delay:.48s"/></svg>
-        <div class="tick">66</div>
+      <div class="vital">
+        <div class="gauge" style="--fill:84">
+          <svg viewBox="0 0 36 36"><circle class="bezel" cx="18" cy="18" r="13" pathLength="100"/><circle class="track" cx="18" cy="18" r="15.9" pathLength="100"/><circle class="val" cx="18" cy="18" r="15.9" pathLength="100" style="animation-delay:.36s"/></svg>
+          <div class="tick">84</div>
+        </div>
+        <div class="v-num">142</div>
+        <div class="v-delta" style="color:var(--ink-faint);text-shadow:none">0 MISSED</div>
+        <div class="v-label">AI CALLS</div>
       </div>
-      <div class="v-num">23</div>
-      <div class="v-delta">▲NEW</div>
-      <div class="v-label">LEADS</div>
+      <div class="vital">
+        <div class="gauge" style="--fill:66">
+          <svg viewBox="0 0 36 36"><circle class="bezel" cx="18" cy="18" r="13" pathLength="100"/><circle class="track" cx="18" cy="18" r="15.9" pathLength="100"/><circle class="val" cx="18" cy="18" r="15.9" pathLength="100" style="animation-delay:.48s"/></svg>
+          <div class="tick">66</div>
+        </div>
+        <div class="v-num">23</div>
+        <div class="v-delta">▲NEW</div>
+        <div class="v-label">LEADS</div>
+      </div>
     </div>
   </section>
 
   <section id="crew">
-    <div class="agent self"><span class="pip working"></span><span>JARVIS</span></div>
-    <div class="agent"><span class="pip online"></span><span>ATLAS</span></div>
-    <div class="agent"><span class="pip online"></span><span>SENTINEL</span></div>
-    <div class="agent"><span class="pip working"></span><span>SARA</span></div>
-    <div class="agent"><span class="pip idle"></span><span>SCOUT</span></div>
-    <div class="agent"><span class="pip online"></span><span>ARGUS</span></div>
-    <div class="agent"><span class="pip idle"></span><span>SAUL</span></div>
+    <div class="crew-head">
+      <span>CREW MANIFEST</span>
+      <div class="line"></div>
+      <span>2 TASKED · 3 LINKED · 2 STANDBY</span>
+    </div>
+    <div class="crew-grid">
+      <div class="agent self"><span class="sig working"></span><span class="nm">JARVIS</span><span class="st tasked">CMD</span></div>
+      <div class="agent"><span class="sig online"></span><span class="nm">ATLAS</span><span class="st">LINK</span></div>
+      <div class="agent"><span class="sig online"></span><span class="nm">SENTINEL</span><span class="st">LINK</span></div>
+      <div class="agent"><span class="sig working"></span><span class="nm">SARA</span><span class="st tasked">TASK</span></div>
+      <div class="agent"><span class="sig idle"></span><span class="nm">SCOUT</span><span class="st">STBY</span></div>
+      <div class="agent"><span class="sig online"></span><span class="nm">ARGUS</span><span class="st">LINK</span></div>
+      <div class="agent"><span class="sig idle"></span><span class="nm">SAUL</span><span class="st">STBY</span></div>
+    </div>
   </section>
 
 </div>
 
 <div id="vignette"></div>
+<div id="scan"></div>
 <div id="grain"></div>
 
 <script>
@@ -580,7 +703,7 @@ requestAnimationFrame(frame);
 /* ============================================================
    TRANSMISSION — staggered word reveal, orb speaks along
    ============================================================ */
-var BRIEF = "Good afternoon, Frank. Revenue\u2019s up 14% to $2,891. SARA handled 142 calls and captured 23 leads \u2014 none missed. Nothing needs you right now.";
+var BRIEF = "Good afternoon, Frank. Revenue’s up 14% to $2,891. SARA handled 142 calls and captured 23 leads — none missed. Nothing needs you right now.";
 var host = document.getElementById('briefText');
 var words = BRIEF.split(' ');
 var DELAY0 = 350, STEP = 105;
